@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon --watch src --exec node src/server.js",
-    "postinstall": "npx prisma generate --schema=../prisma/schema.prisma"
+    "postinstall": "node ./scripts/generatePrismaClient.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",
