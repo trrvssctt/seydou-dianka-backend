@@ -14,8 +14,17 @@ exports.list = async (req, res, next) => {
         // fallback to a raw SQL query which returns whatever columns currently exist.
         if (innerErr && innerErr.code === 'P2022') {
           // Use a raw query to avoid Prisma mapping to the model (which expects missing columns)
-          // Note: table name uses Prisma model casing
-          items = await prisma.$queryRaw`SELECT * FROM "Service" ORDER BY "order" ASC`;
+          // Try ordering by "order" if present; if that column is missing, fall back to unordered select.
+          try {
+            items = await prisma.$queryRaw`SELECT * FROM "Service" ORDER BY "order" ASC`;
+          } catch (sqlErr) {
+            // Postgres error code 42703 = undefined_column
+            if (sqlErr && sqlErr.meta && sqlErr.meta.code === '42703') {
+              items = await prisma.$queryRaw`SELECT * FROM "Service"`;
+            } else {
+              throw sqlErr;
+            }
+          }
         } else {
           throw innerErr;
         }
