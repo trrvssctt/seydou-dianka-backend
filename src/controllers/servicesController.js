@@ -7,7 +7,19 @@ exports.list = async (req, res, next) => {
       items = await prisma.service.findMany({ orderBy: { order: 'asc' } });
     } catch (err) {
       // Fallback when the Prisma client / DB schema doesn't have `order` yet
-      items = await prisma.service.findMany();
+      try {
+        items = await prisma.service.findMany();
+      } catch (innerErr) {
+        // If Prisma complains about missing columns (P2022) because the DB schema is older
+        // fallback to a raw SQL query which returns whatever columns currently exist.
+        if (innerErr && innerErr.code === 'P2022') {
+          // Use a raw query to avoid Prisma mapping to the model (which expects missing columns)
+          // Note: table name uses Prisma model casing
+          items = await prisma.$queryRaw`SELECT * FROM "Service" ORDER BY "order" ASC`;
+        } else {
+          throw innerErr;
+        }
+      }
     }
     res.json(items);
   } catch (e) {
