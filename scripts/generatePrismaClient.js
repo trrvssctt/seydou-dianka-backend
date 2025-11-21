@@ -43,13 +43,16 @@ try {
       execSync(cmd, { stdio: 'inherit', cwd: schemaDir });
     } catch (secondErr) {
       console.error('Both attempts to run `prisma generate` failed.');
+      const util = require('util');
       if (firstErr) {
-        console.error('First attempt (root) error:', firstErr && firstErr.message);
+        console.error('First attempt (root) error message:', firstErr && firstErr.message);
+        console.error('First attempt full error:', util.inspect(firstErr, { showHidden: true, depth: 5 }));
         if (firstErr.stdout) console.error('stdout:', firstErr.stdout.toString());
         if (firstErr.stderr) console.error('stderr:', firstErr.stderr.toString());
       }
       if (secondErr) {
-        console.error('Second attempt (schema dir) error:', secondErr && secondErr.message);
+        console.error('Second attempt (schema dir) error message:', secondErr && secondErr.message);
+        console.error('Second attempt full error:', util.inspect(secondErr, { showHidden: true, depth: 5 }));
         if (secondErr.stdout) console.error('stdout:', secondErr.stdout.toString());
         if (secondErr.stderr) console.error('stderr:', secondErr.stderr.toString());
       }
