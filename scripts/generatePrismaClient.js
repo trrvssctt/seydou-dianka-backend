@@ -20,12 +20,22 @@ try {
     console.error('Prisma schema not found. Searched relative to', start, 'and', process.cwd());
     process.exit(1);
   }
-
+  const schemaDir = path.dirname(schema);
   console.log('Found Prisma schema at', schema);
-  console.log('Running: npx prisma generate --schema=' + schema);
-  execSync(`npx prisma generate --schema="${schema}"`, { stdio: 'inherit' });
+  console.log('Schema directory:', schemaDir);
+  console.log('Current working directory:', process.cwd());
+  try {
+    console.log('Prisma CLI version:');
+    execSync('npx prisma --version', { stdio: 'inherit', cwd: schemaDir });
+  } catch (verErr) {
+    console.warn('Could not run `npx prisma --version`:', verErr && verErr.message);
+  }
+
+  const cmd = `npx prisma generate --schema="${schema}"`;
+  console.log('Running:', cmd, 'with cwd:', schemaDir);
+  execSync(cmd, { stdio: 'inherit', cwd: schemaDir });
   process.exit(0);
 } catch (err) {
-  console.error('Failed to generate Prisma client:', err);
+  console.error('Failed to generate Prisma client:', err && err.message ? err.message : err);
   process.exit(1);
 }
