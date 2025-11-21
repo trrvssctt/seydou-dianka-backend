@@ -32,8 +32,30 @@ try {
   }
 
   const cmd = `npx prisma generate --schema="${schema}"`;
-  console.log('Running:', cmd, 'with cwd:', schemaDir);
-  execSync(cmd, { stdio: 'inherit', cwd: schemaDir });
+  console.log('Attempt 1: Running from project root cwd:', process.cwd());
+  try {
+    console.log('Running:', cmd, 'with cwd:', process.cwd());
+    execSync(cmd, { stdio: 'inherit', cwd: process.cwd() });
+  } catch (firstErr) {
+    console.warn('Attempt 1 failed, will try from schema directory. Error message:', firstErr && firstErr.message);
+    try {
+      console.log('Attempt 2: Running:', cmd, 'with cwd:', schemaDir);
+      execSync(cmd, { stdio: 'inherit', cwd: schemaDir });
+    } catch (secondErr) {
+      console.error('Both attempts to run `prisma generate` failed.');
+      if (firstErr) {
+        console.error('First attempt (root) error:', firstErr && firstErr.message);
+        if (firstErr.stdout) console.error('stdout:', firstErr.stdout.toString());
+        if (firstErr.stderr) console.error('stderr:', firstErr.stderr.toString());
+      }
+      if (secondErr) {
+        console.error('Second attempt (schema dir) error:', secondErr && secondErr.message);
+        if (secondErr.stdout) console.error('stdout:', secondErr.stdout.toString());
+        if (secondErr.stderr) console.error('stderr:', secondErr.stderr.toString());
+      }
+      throw secondErr || firstErr;
+    }
+  }
   process.exit(0);
 } catch (err) {
   console.error('Failed to generate Prisma client:', err && err.message ? err.message : err);
